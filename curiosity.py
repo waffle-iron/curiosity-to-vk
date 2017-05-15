@@ -9,7 +9,7 @@ from base64 import b64encode
 from six.moves.urllib.parse import urlencode, urljoin
 
 
-topic = []
+topics = []
 href = []
 title = []
 front_img_src = []
@@ -30,7 +30,7 @@ re_front_img_alt = re.compile(r'alt=\"(.*?)\"')
 def curi_tr_get_html():
     '''Возвращает html страницы трендов'''
     trendings_html = ""
-    g = Grab()
+    g = Grab(timeout=20)
     resp = g.go("https://curiosity.com/trending/")
     trendings_html = resp.unicode_body(ignore_errors=True, fix_special_entities=True)
     return trendings_html
@@ -75,10 +75,37 @@ def curi_tr_download_topic_front_img():
     while count <= max_index:
         front_img_src.append("http:" + front_img_srcs[count][1])
         resp = g_front_img.go(front_img_src[count])
-        open('./front_img/front_img'+str(count)+'.png', 'wb').write(resp.body)
+        open('./curiosity-to-vk/front_img/front_img'+str(count)+'.png', 'wb').write(resp.body)
+        front_img_src.append('./curiosity-to-vk/front_img/front_img'+str(count)+'.png')
         count = count + 1
+    return front_img_src
 
-curi_tr_download_topic_front_img()
+class Topics:
+    def __init__(self, href, title, front_img_src, front_img_alt):
+        self.href = href
+        self.title = title
+        self.front_img_src = front_img_src
+        self.front_img_alt = front_img_alt
+
+def topic_obj_gen():
+    count = 0
+    max_index = range(9)
+    for count in max_index:
+        yield Topics(curi_tr_html_get_topic_href()[count], curi_tr_get_topic_title()[count], curi_tr_download_topic_front_img()[count], curi_tr_get_topic_front_img_alt()[count])
+
+def generation_topic():
+    con = 0
+    max_index = 9
+    topic_gen = topic_obj_gen()
+    for count in topic_gen:
+        if con <= max_index:
+            topic = Topics(href[con], title[con], front_img_src[con], front_img_alt[con])
+            topics.append(topic)
+            con += 1
+    return topics
+
+#generation_topic()
+#print(topics[8].title)
 
 if __name__ == "__main__":
     print("Любопытство[curiosity.com]")
