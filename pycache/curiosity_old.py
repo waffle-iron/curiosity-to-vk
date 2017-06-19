@@ -37,12 +37,12 @@ class Topics:
     # Регулярные выражения для разбора html
     re_href = re.compile(r'.a\shref=\"/topics/(.*?)/\"\n')
     re_title= re.compile(r'title=\"(.*?)\">')
-    re_front_img_src = re.compile(r'src=\"https://dw8stlw9qt0iz\.cloudfront\.net/(.*?)/fit-in/380x0/filters:format\(jpeg\):quality\(70\)/https:(.*?)\"')
+    re_front_img_src = re.compile(r'/curiosity-data\.s3\.amazonaws\.com/images/content/hero/standard/(.*?)\.png\"\)')
     re_front_img_alt = re.compile(r'alt=\"(.*?)\"')
     re_first_post_img = re.compile(r'<img class="flipboard-image" src="https://dw8stlw9qt0iz.cloudfront.net/(.*?)/750x450/filters:format\(jpeg\):quality\(75\)/(.*?)\"')
     re_description = re.compile(r'')
 
-
+url\(\"https://dw8stlw9qt0iz\.cloudfront\.net/(.*?)/1000x600/filters:format\(jpeg\):quality\(80\):extract_focal\(\)/(.*?)\.png\"\)
 
     def __init__(self, href, title, front_img_alt, front_img_alt_ru, title_ru, front_img, first_img, descriptions, descriptions_ru):
         #Метод инициализации объекта класса
