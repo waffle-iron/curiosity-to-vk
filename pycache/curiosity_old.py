@@ -121,7 +121,7 @@ url\(\"https://dw8stlw9qt0iz\.cloudfront\.net/(.*?)/1000x600/filters:format\(jpe
         while count <= max_index:
             Topics.front_img_href.append("http:" + Topics.front_img_srcs[count][1])
             resp = g_front_img.go(Topics.front_img_href[count])
-            open('/home/ubuntu/workspace/curiosity-to-vk/topics/front-img/'+str(count)+'.png', 'wb').write(resp.body)
+            open('/home/ubuntu/workspace/curiosity-to-vk/topics/front-img-'+str(count)+'.png', 'wb').write(resp.body)
             Topics.front_img.append('/home/ubuntu/workspace/curiosity-to-vk/topics/front-img/'+str(count)+'.png')
             count = count + 1
         return Topics.front_img

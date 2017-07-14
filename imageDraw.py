@@ -39,5 +39,18 @@ font = ImageFont.truetype("./curiosity-to-vk/topics/Roboto-Fosts/Roboto-Regular.
 draw.text((20, 20),capute.split("."),(186, 85, 211),font=font)
 img.save('./curiosity-to-vk/topics/first-img/0.png')
 '''
+
+
+        #составляем текст
+        txt = f"{Curiosity.topic_channel_ru[0][0]}" + "\n" + f"{Curiosity.topic_text_1_ru[0][0]}" + "\n" + f"{Curiosity.topic_title_ru[0][0]}"
+        #открываем изоброжение
+        base = Image.open('/home/ubuntu/workspace/curiosity-to-vk/topics/0.png').convert('RGBA')
+        #наносим текст на изображение
+        PIL.ImageDraw.Draw.multiline_text(11, txt, fill=None, font=None, anchor=None, spacing=0, align="center")
+
+        out = Image.alpha_composite(base, txt)
+
+        out.show()
+        source_img = Image.open("input.jpg").convert("RGBA")
 if __name__ == '__main__':
     print("Тест")

@@ -9,105 +9,279 @@ from trendingparser import TrendingParser
 import dis
 import inspect
 import pyrebase
+from io import open as iopen
+import grab
+from grab import Grab
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
-config = {
-    "apiKey": "AIzaSyD6EzxDobegHGvkorLEle6OBt_RNedkD0g",
-    "authDomain": "project-3931781304531690229.firebaseapp.com",
-    "databaseURL": "https://project-3931781304531690229.firebaseio.com",
-    "projectId": "project-3931781304531690229",
-    "storageBucket": "project-3931781304531690229.appspot.com",
-    "type": "service_account",
-    "project_id": "project-3931781304531690229",
-    "private_key_id": "fa36c163c3267295a17d6c34a7bbfb9fbb7fb860",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDH+ULfO0USH5/e\n8W274zuSjKMySBIJxU14tB1C+Sl4QREeMbndzflcnJ+HnRDNyvDL5Y9iaiHC+5Ao\nqdPJigr4ggR/jXZ7BMsAEcVVqyzzFZmnqhAdX//uxzjJQZFe8EdANdArhUHMWNr5\nWqY3zG27IqpxRb/75UevY3rWhiWiaIjSyCprNOhs1n16FG1Tjlgi1tG9C8F335qK\nAYiW1FhEZKYqDe82AZSTWwqx/hVl4D+m4BRpmvwbVdJY6cNqWKYUn7HcptmdpSon\nNLX5YxB02ATj1N9jjxzYxaw+msL0oN9ad1/2uzwl1CwdBVRpRGVl3gw6qAxgkTiR\ntExt33T5AgMBAAECggEBAJHiE5jKok7gZz67HfSNhu4YTw3ladNa7nN54kbzgf9K\naHSAjjlzg9C+KdtDB/k5bYUxyPJgvpSB9N7VVb2XSP2VzDZJOv/vtTAtxqoCoF4N\nifS4qdzkJc9J4vFfNe/ulewP1feJ1UCAKe7y5IOcTQjR90l/OtlGoI8goYJShq39\nDoEvp7oSQ3yy3WXSj+WwFrLPz79eLpFymw3WdJ1PRi2y2/ls+wLe5ostEG+FD3kq\ndGDOXXB+FJPJuJrODf6m9qPlxTQkWEXhMYMpMgfKWiAOKhNYYJQ4IpJLSXu4H3WY\ncVPaGRE1df9lrq1yBS35aWzeortebhWrlNKLHSUS4gECgYEA5D28n3NtSNYYhJhO\nLbvXvt7k80RyB+n/bZnX3U42NFrLdMt2yrB59MuDKkgKZubBZMBAZu6FDo6wC/6r\nSRbB30a3KoNlXhLeOGNGRqYLrJBL76Oxt0Ekm68nRdQEGbUUKza5hNoKJLnwBzdD\nazgUBc2gdncfw0xYdrKZ8QNhwpkCgYEA4EtrYk6b3ll2hVaWyZEYXA7upz+24A4k\neafLKMNP3tr0HU9V6VVcZRK72mRrAeBGAoSDm5/Mgvk8XQwr52/zvuV8yim1wmGd\nR1mpYGGSWBFaMxPwSgaBIOhDG0a3HSzfoTGXbUig0WaquMXXOrLk1b8HSBHPMWwR\n5Dm5LJAXIWECgYBS1ZkkYXbzLUh+ruwIqxjU2/5Jz7h26NTcCS6P0ffYLm+Sttkp\nHL1WO5oh+T1VNUBQ+XkmIkDGFMENyWKOxySbjQWi90cNylk+K8FwmIi6GzCEC2vP\nL2RC4GGndRf74H0uZdEUxzFRPO5BICxmuFaD+KnY9MjhT0733UADeY+8WQKBgQDG\nEnRTTV4ifljHKY9hk6uyaFFjC0YhGPwnHwGvDsPy5uLbG1ugAgzlCSUxmKpS7s6E\nnKdogDbnltgyx3PiHyBefWS1Vx42+WMeRlToU2IcOb6xCrORe6r+932DkfBVaHJY\ndGXoUVILeiHbqIMISEEDbX4tq+SQHYKzTDJ14w06IQKBgDZFDIVgk4v81yH0M+oe\nJ1oDUpFj//wVWfuOjalR/+udBIIVJXILchm6rVHOnTEWmvxFZCcD7Zxhy5pEGSDg\nHM/pHOPth8vh5qquEH+Ji613bp/VXVysN37xkpa23fhxSgankqbFiJoxpqOhgWYe\nxgKAzkt34Fug8XYO+hDAbL3X\n-----END PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk-alb7j@project-3931781304531690229.iam.gserviceaccount.com",
-    "client_id": "105042264485843483839",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://accounts.google.com/o/oauth2/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-alb7j%40project-3931781304531690229.iam.gserviceaccount.com",
-    "serviceAccount": "/home/ubuntu/workspace/curiosity-to-vk/pycache/kirsanov-dot-com-fa36c163c326.json"
-    }
 
-firebase = pyrebase.initialize_app(config)
+class Curiosity:
 
-# Получить ссылку на службу авторизации
-auth = firebase.auth()
+    #регулярные выражения
+    re_zero_img = re.compile(r"https://curiosity-data\.s3\.amazonaws\.com/images/content/meme/standard/(.*?)\.png")
 
-uid = 'some-uid'
+    #списки с английским тектом
+    topic_title = []
+    topic_img_1_href = []
+    topic_img_1_scr = []
+    topic_img_0_href = []
+    topic_img_0_scr =[]
+    topic_channel = []
+    topic_text_1 = []
 
-custom_token = auth.create_custom_token(uid)
-# Зарегистрировать пользователя в базе
-user = auth.sign_in_with_email_and_password("danilakirsanovspb@gmail.com", "Nhb1,e2yfk3$")
+    #списки с русским текстом
+    topic_channel_ru = []
+    topic_text_1_ru = []
+    topic_title_ru = []
 
-# Получить ссылку на службу базы данных
-db = firebase.database()
 
-# Передайте idToken пользователя методу push
-#results = db.child("curiosity").child("topics").push(data, user['idToken'])
+    def __init__(self, a):
+        self.a = a
 
-def translater(channel, title, text1):
-    payload = {
-        "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
-        "text": f"{channel}. |{title}. |{text1}",
-        'lang': 'en-ru',
-        'format': 'plain'
-    }
-    r = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=payload)
 
-    return r.json()
+    @staticmethod
+    #работа с базой данных
+    def database():
+        config = {
+            "apiKey": "AIzaSyD6EzxDobegHGvkorLEle6OBt_RNedkD0g",
+            "authDomain": "project-3931781304531690229.firebaseapp.com",
+            "databaseURL": "https://project-3931781304531690229.firebaseio.com",
+            "projectId": "project-3931781304531690229",
+            "storageBucket": "project-3931781304531690229.appspot.com",
+            "type": "service_account",
+            "project_id": "project-3931781304531690229",
+            "private_key_id": "fa36c163c3267295a17d6c34a7bbfb9fbb7fb860",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDH+ULfO0USH5/e\n8W274zuSjKMySBIJxU14tB1C+Sl4QREeMbndzflcnJ+HnRDNyvDL5Y9iaiHC+5Ao\nqdPJigr4ggR/jXZ7BMsAEcVVqyzzFZmnqhAdX//uxzjJQZFe8EdANdArhUHMWNr5\nWqY3zG27IqpxRb/75UevY3rWhiWiaIjSyCprNOhs1n16FG1Tjlgi1tG9C8F335qK\nAYiW1FhEZKYqDe82AZSTWwqx/hVl4D+m4BRpmvwbVdJY6cNqWKYUn7HcptmdpSon\nNLX5YxB02ATj1N9jjxzYxaw+msL0oN9ad1/2uzwl1CwdBVRpRGVl3gw6qAxgkTiR\ntExt33T5AgMBAAECggEBAJHiE5jKok7gZz67HfSNhu4YTw3ladNa7nN54kbzgf9K\naHSAjjlzg9C+KdtDB/k5bYUxyPJgvpSB9N7VVb2XSP2VzDZJOv/vtTAtxqoCoF4N\nifS4qdzkJc9J4vFfNe/ulewP1feJ1UCAKe7y5IOcTQjR90l/OtlGoI8goYJShq39\nDoEvp7oSQ3yy3WXSj+WwFrLPz79eLpFymw3WdJ1PRi2y2/ls+wLe5ostEG+FD3kq\ndGDOXXB+FJPJuJrODf6m9qPlxTQkWEXhMYMpMgfKWiAOKhNYYJQ4IpJLSXu4H3WY\ncVPaGRE1df9lrq1yBS35aWzeortebhWrlNKLHSUS4gECgYEA5D28n3NtSNYYhJhO\nLbvXvt7k80RyB+n/bZnX3U42NFrLdMt2yrB59MuDKkgKZubBZMBAZu6FDo6wC/6r\nSRbB30a3KoNlXhLeOGNGRqYLrJBL76Oxt0Ekm68nRdQEGbUUKza5hNoKJLnwBzdD\nazgUBc2gdncfw0xYdrKZ8QNhwpkCgYEA4EtrYk6b3ll2hVaWyZEYXA7upz+24A4k\neafLKMNP3tr0HU9V6VVcZRK72mRrAeBGAoSDm5/Mgvk8XQwr52/zvuV8yim1wmGd\nR1mpYGGSWBFaMxPwSgaBIOhDG0a3HSzfoTGXbUig0WaquMXXOrLk1b8HSBHPMWwR\n5Dm5LJAXIWECgYBS1ZkkYXbzLUh+ruwIqxjU2/5Jz7h26NTcCS6P0ffYLm+Sttkp\nHL1WO5oh+T1VNUBQ+XkmIkDGFMENyWKOxySbjQWi90cNylk+K8FwmIi6GzCEC2vP\nL2RC4GGndRf74H0uZdEUxzFRPO5BICxmuFaD+KnY9MjhT0733UADeY+8WQKBgQDG\nEnRTTV4ifljHKY9hk6uyaFFjC0YhGPwnHwGvDsPy5uLbG1ugAgzlCSUxmKpS7s6E\nnKdogDbnltgyx3PiHyBefWS1Vx42+WMeRlToU2IcOb6xCrORe6r+932DkfBVaHJY\ndGXoUVILeiHbqIMISEEDbX4tq+SQHYKzTDJ14w06IQKBgDZFDIVgk4v81yH0M+oe\nJ1oDUpFj//wVWfuOjalR/+udBIIVJXILchm6rVHOnTEWmvxFZCcD7Zxhy5pEGSDg\nHM/pHOPth8vh5qquEH+Ji613bp/VXVysN37xkpa23fhxSgankqbFiJoxpqOhgWYe\nxgKAzkt34Fug8XYO+hDAbL3X\n-----END PRIVATE KEY-----\n",
+            "client_email": "firebase-adminsdk-alb7j@project-3931781304531690229.iam.gserviceaccount.com",
+            "client_id": "105042264485843483839",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://accounts.google.com/o/oauth2/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-alb7j%40project-3931781304531690229.iam.gserviceaccount.com",
+            "serviceAccount": "/home/ubuntu/workspace/curiosity-to-vk/pycache/kirsanov-dot-com-fa36c163c326.json"
+            }
 
-in_db, new, to_post = TrendingParser.change_href()
+        firebase = pyrebase.initialize_app(config)
 
-for href in new:
+        # Получить ссылку на службу авторизации
+        auth = firebase.auth()
 
-    r = requests.get(href)
+        uid = 'some-uid'
 
-    html = r.text
+        custom_token = auth.create_custom_token(uid)
 
-    soup = BeautifulSoup(html, "lxml")
+        # Зарегистрировать пользователя в базе
+        user = auth.sign_in_with_email_and_password("danilakirsanovspb@gmail.com", "Nhb1,e2yfk3$")
 
-    topic_page = soup.find("div", {"class": "topic-page"})
+        # Получить ссылку на службу базы данных
+        db = firebase.database()
 
-    head = topic_page.find_all("div", {"class": "image-header"})
-
-    body = topic_page.find_all("div", {"class": "content-item"})
-
-    regexp_img1 = re.compile(r'/curiosity-data\.s3\.amazonaws\.com/images/content/hero/standard/(.*?)\.png\"\)')
-
-    for item in head:
-        img1 = re.findall(regexp_img1, item.find('style').text)
-        if item.find("div", {"class": "header-content"}).find('a') != None:
-
-            channel = item.find("div", {"class": "header-content"}).find('a').text
-
-            title = item.find("div", {"class": "header-content"}).find('h1').text
-
-        elif item.find("div", {"class": "header-content"}).find('a') == None:
-
-            channel = item.find("div", {"class": "header-content"}).find('h5').text
-
-            title = item.find("div", {"class": "header-content"}).find('h1').text
-
-    text1 = body[0].find("p").text
-
-    data = {
-        "curiosity/topics/"+ str(href).replace('http://curiosity.com/topics/', ''): {
-            'id': db.generate_key(),
-            'title': title,
-            'description': text1,
-            'channel': channel,
-            'img': img1[0]
+        data = {
+            "curiosity/topics/"+ str(href).replace('http://curiosity.com/topics/', ''): {
+                'id': db.generate_key(),
+                'title': title,
+                'description': text_1,
+                'channel': channel,
+                'img': img_1[0]
+            }
         }
-    }
 
-    RJSON = translater(channel, title, text1)
-    with open("./text_to_post.json", "a") as f:
-        f.write(json.dumps(RJSON))
+        db.update(data)
 
-
-    #db.update(data)
+        #Передайте idToken пользователя методу push
+        #results = db.child("curiosity").child("topics").push(data, user['idToken'])
 
 
+    @staticmethod
+    #парсинг информации из топиков
+    def topicsparser():
+
+        in_db, new, to_post = TrendingParser.change_href()
+
+        for href in new:
+
+            r = requests.get(href)
+
+            html = r.text
+
+            soup = BeautifulSoup(html, "lxml")
+
+            topic_page = soup.find("div", {"class": "topic-page"})
+
+            head = topic_page.find_all("div", {"class": "image-header"})
+
+            body = topic_page.find_all("div", {"class": "content-item"})
+
+            regexp_img_1 = re.compile(r'/curiosity-data\.s3\.amazonaws\.com/images/content/hero/standard/(.*?)\.png\"\)')
+
+            for item in head:
+
+                img_1 = re.findall(regexp_img_1, item.find('style').text)
+
+                text_1 = body[0].find("p").text
+
+                if item.find("div", {"class": "header-content"}).find('a') != None:
+
+                    channel = item.find("div", {"class": "header-content"}).find('a').text
+
+                    title = item.find("div", {"class": "header-content"}).find('h1').text
+
+                elif item.find("div", {"class": "header-content"}).find('a') == None:
+
+                    channel = item.find("div", {"class": "header-content"}).find('h5').text
+
+                    title = item.find("div", {"class": "header-content"}).find('h1').text
+
+            #заполняем список каналов
+            Curiosity.topic_channel.append(str(channel))
+
+            #заполняем список заголовков
+            Curiosity.topic_title.append(str(title))
+
+            #заполняем список ссылок на изображения
+            Curiosity.topic_img_1_href.append("http://curiosity-data.s3.amazonaws.com/images/content/hero/standard/" + img_1[0] + ".png")
+
+            #заполняем список первых текстов
+            Curiosity.topic_text_1.append(str(text_1))
+
+
+    @staticmethod
+    #скачиваем изображения, заполняем список адресов к картинкам в нашей фс
+    def img_1_downloader():
+        #Скачивает главные изображения постов
+        g_first_img = Grab(timeout=20)
+        g_first_img.setup(headers={'chrome-proxy': 's=Ci4KEwjMhrTr79_TAhXQIBkKHQH0A0USDAib-sXIBRCojrrZAxoJCgdkZWZhdWx0EkgwRgIhAIdAgOu3URu5cs-VjgT5MlOXD8ckBB3udUqTMeXYIGc0AiEAmdK5TxX33uuUGLrtjrZGzKNXOnV4NIJg6YKU50BVMsA=, c=win, b=3029, p=96'})
+        count = 0
+        max_index = len(Curiosity.topic_img_1_href) - 1
+        while count <= max_index:
+            resp = g_first_img.go(Curiosity.topic_img_1_href[count])
+            open('/home/ubuntu/workspace/curiosity-to-vk/topics/'+str(count)+'.png', 'wb').write(resp.body)
+            #заполняем список адресов к картинкам для нашей фс
+            Curiosity.topic_img_1_scr.append('/home/ubuntu/workspace/curiosity-to-vk/topics/'+str(count)+'.png')
+            count = count + 1
+
+        return Curiosity.topic_img_1_scr, Curiosity.topic_img_0_scr
+
+
+    @staticmethod
+    def img_0_downloader():
+        #скачиваем изображения обложек постов
+        g = Grab()
+        resp = g.go("https://curiosity.com/trending/")
+        html = resp.unicode_body(ignore_errors=True, fix_special_entities=True)
+        with open('./text.html', "w") as trend:
+            trend.write(html)
+
+        text = open('./text.html').read()
+
+        Curiosity.zero_img_srcs = re.findall(Curiosity.re_zero_img, text)
+
+        g_zero_img = Grab(timeout=20)
+        g_zero_img.setup(headers={'chrome-proxy': 's=Ci4KEwjMhrTr79_TAhXQIBkKHQH0A0USDAib-sXIBRCojrrZAxoJCgdkZWZhdWx0EkgwRgIhAIdAgOu3URu5cs-VjgT5MlOXD8ckBB3udUqTMeXYIGc0AiEAmdK5TxX33uuUGLrtjrZGzKNXOnV4NIJg6YKU50BVMsA=, c=win, b=3029, p=96'})
+
+        con = 0
+        max_ind = 9
+        while con <= max_ind:
+            Curiosity.topic_img_0_href.append("http://"+ Curiosity.zero_img_srcs[con][1])
+
+            res = g_zero_img.go(Curiosity.topic_img_0_href[con])
+
+            with open('/home/ubuntu/workspace/curiosity-to-vk/topics/zero-img-'+str(con)+'.png', 'wb') as zero:
+                zero.write(res.body)
+            Curiosity.topic_img_0_scr.append('/home/ubuntu/workspace/curiosity-to-vk/topics/zero-img-'+str(con)+'.png')
+            con = con + 1
+
+
+    @staticmethod
+    #перевод статьи curiosity на руский язык
+    def translater():
+        #временные переменные для циклов
+        count = 0
+        max_index = len(Curiosity.topic_channel) - 1
+
+        #переводим списки
+        while count <= max_index:
+            #канал
+            channel = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_channel[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+            #заголовок
+            title = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_title[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+            #параграф № 1
+            text_1 = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_text_1[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+
+            # делаем запрос к яндекс переводчику и сохраняем ответ
+            channel_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=channel).json()
+                #канал
+            title_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=title).json()
+                #заголовок
+            text_1_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=text_1).json()
+                #параграф 1
+
+            #заполняем списки с русским текстом
+            Curiosity.topic_title_ru.append(title_ru['text'])
+                #заголовок
+            Curiosity.topic_channel_ru.append(channel_ru['text'])
+                #канал
+            Curiosity.topic_text_1_ru.append(text_1_ru['text'])
+                #параграф 1
+
+            #условие итерации
+            count = count + 1
+
+        return Curiosity.topic_channel_ru, Curiosity.topic_title_ru, Curiosity.topic_text_1_ru
+
+
+    @staticmethod
+    def painter():
+
+        text = Curiosity.topic_text_1_ru[0][0]
+
+        img = Image.open("./topics/0.png", "r").convert("RGBA")
+
+        draw = ImageDraw.Draw(img)
+
+        font = ImageFont.truetype("./topics/Roboto-Fosts/Roboto-Regular.ttf")
+
+        text_size = font.getsize(text)
+
+        button_size = (text_size[0]+20, text_size[1]+20)
+
+        button_img = Image.new('RGBA', button_size, "black")
+
+        button_draw = ImageDraw.Draw(button_img)
+
+        button_draw.multiline_text((0, 0), text, font=font, align = "center")
+
+        img.paste(button_img, (50, 50))
+
+        #draw.text((20, 20), text, (186, 85, 211), font=font)
+
+        img.save('./topics/0.png')
+
+
+
+#======ТЕСТЫ==========ТЕСТЫ===============ТЕСТЫ=============ТЕСТЫ==============#
+
+
+    @staticmethod
+    def test():
+        Curiosity.topicsparser()
+        Curiosity.img_0_downloader()
+
+Curiosity.test()
 if __name__ == "__main__":
-    print("vasya")
+    print("Любопытcтво делает вас умнее")
