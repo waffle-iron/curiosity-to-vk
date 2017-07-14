@@ -39,7 +39,5 @@ class TrendingParser:
         return href_in_db, href_new, href_to_post
 
 
-
-
 if __name__ == "__main__":
     print("refresh_links")
