@@ -1,78 +1,75 @@
-from __future__ import print_function
-import requests
-import re
-from grab import Grab
-import trendingparser
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance
+from trendingparser import TrendingParser as TrendingParser
+import topicparser
+import redis
 
-#from topicsparser import Curiosity
+# ТУЧА С ДАННЫМИ
+
+topic_img_1_href = []
+topic_channel = []
+topic_title = []
+topic_text_1 = []
+topic_img_2_href = []
+topic_paragraph_2_title = []
+topic_paragraph_2_text = []
+topic_img_3_href = []
+topic_paragraph_3_title = []
+topic_paragraph_3_text = []
+topic_video_1_title = []
+topic_video_1_data_scr = []
+
+# ==========TEST================TEST======================TEST============== #
+
+in_db, new, to_post = TrendingParser.change_href()
+
+for href in new:
+    try:
+       img_1_href,channel,title,text_1, img_2_href, paragraph_2_title, paragraph_2_text, img_3_href, paragraph_3_title, paragraph_3_text, video_1_title, video_1_data_scr = topicparser.topic_parser(href)
+
+       # ЗАПОЛНЯЕМ СПИСКИ
+       # каналы
+       topic_channel.append(str(channel))
+
+       # заголовки
+       topic_title.append(str(title))
+
+       # ссылок на 1 изображения
+       topic_img_1_href.append(
+           "http://curiosity-data.s3.amazonaws.com/images/content/hero/standard/" + img_1_href[0] + ".png")
+
+       # текты первых блоков
+       topic_text_1.append(str(text_1))
+
+       # ссылки на 2 изображения
+       topic_img_2_href.append(str(img_2_href))
+
+       # заголовки вторых параграфов
+       topic_paragraph_2_title.append(str(paragraph_2_title))
+
+       # тексты 2-х параграфов
+       topic_paragraph_2_text.append(str(paragraph_2_text))
+
+       # ссылки на 3 изображения
+       topic_img_3_href.append(str(img_3_href))
+
+       # заголовки третьих параграфов
+       topic_paragraph_3_title.append(str(paragraph_3_title))
+
+       # тексты 3-их параграфов
+       topic_paragraph_3_text.append(str(paragraph_3_text))
+
+       # заголовки видеороликов
+       topic_video_1_title.append(str(video_1_title))
+
+       # ссылки на видеоролики
+       topic_video_1_data_scr.append("https://www.youtube.com/watch?v=" + str(video_1_data_scr))
+
+    except:
+        print("Ошибочка выскочила")
 
 
-def painter(count):
+print("СТОПАК-ДЛЯ-ДЕБАГ")
 
-    # TODO: цикл прохода по всем изображения. полностью русская обложка из первого изоброжения поста
-
-    # Название канала
-    channel = "Психология.".upper()  # topic_channel_ru[0][0]
-
-    # Заголовок
-    title = "Как Нарисовать Круг Связана С Культурным Воспитанием."
-
-    # изображение для модификации
-    img_composit = Image.open("./topics/zero-img-"+str(count)+".png").convert("RGBA")
-
-    # прозрачный загрузчик логотипов
-    logo_painter = Image.open('./logo-playload.png').convert("RGBA")
-
-    # кисть для загрузчика
-    logo_painter_draw = ImageDraw.Draw(logo_painter)
-
-    # шрифты
-    channel_font = ImageFont.truetype("./topics/Roboto-Fosts/Roboto-Bold.ttf", 24)
-
-    # размер блока текста с названием канала в списке
-    channel_size = channel_font.getsize(channel)
-
-    # размер блока текста с названием канала в кортеже
-    _size = (channel_size[0] + 20, channel_size[1] + 20)
-
-    # пустые изображение для нанесения текста с названием канала
-    channel_im = Image.open('./Button.png').convert("RGBA")
-
-    # изменяем размер изображения
-    channel_img = channel_im.resize(_size, resample=0)
-
-    # кисть для пустое изображение для нанесения текста с названием канала
-    channel_draw = ImageDraw.Draw(channel_img)
-
-    # процедура нанесения мультистрокового текста с названием канала на изобрание
-    x = (_size[0] - channel_size[0]) / 2
-    y = (_size[1] - channel_size[1]) / 2
-    channel_draw.multiline_text((x, y), channel, font=channel_font, align="center")
-
-    # наносим заголовок на загрузцик
-    logo_painter_draw.multiline_text((10, 945), title, font=channel_font, align="left")
-
-    # наносим канал и заголовок на загрузчик
-    logo_painter.paste(channel_img, (5, 900))
-
-    # композиция обложки и загрузчика логотипов
-    composition = Image.alpha_composite(img_composit, logo_painter)
-
-    # процедура сохранения композиционной обложки в файл
-    composition.save("./topics/zero-img-"+str(count)+"-composite.png")  # compositeon.save("./topics/zero-img-0-composit.png")
-
-# ========ТЕСТЫ=======ТЕСТЫ=========ТЕСТЫ=========ТЕСТЫ========
-
-count = 0
-max_index = 9
-while count <= max_index:
-    painter(count)
-    count = count + 1
-
-print("Cтоп брейк")
 
 
 if __name__ == "__main__":
-    print("Художничаемс")
-    #  Image.open("C:/Users/Елена/PycharmProjects/curiosity-to-vk/topics/").convert("RGBA")
+    print("Парсимс")
