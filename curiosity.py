@@ -5,7 +5,6 @@ import re
 import json
 from bs4 import BeautifulSoup
 import trendingparser
-from trendingparser import TrendingParser
 import dis
 import inspect
 import pyrebase
@@ -13,7 +12,8 @@ from io import open as iopen
 import grab
 from grab import Grab
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
-
+from trendingparser import TrendingParser as TrendingParser
+import topicparser
 
 class Curiosity:
 
@@ -21,14 +21,22 @@ class Curiosity:
     re_zero_img = re.compile(r"https://curiosity-data\.s3\.amazonaws\.com/images/content/meme/standard/(.*?)\.png")
 
     #списки с английским тектом
-    topic_title = []
-    topic_img_1_href = []
+    topic = [title, [] = []
     topic_img_1_scr = []
     topic_img_0_href = []
     topic_img_0_hrefs = []
     topic_img_0_scr =[]
-    topic_channel = []
     topic_text_1 = []
+    topic_img_1_href = []
+    topic_channel = []
+    topic_img_2_href = []
+    topic_paragraph_2_title = []
+    topic_paragraph_2_text = []
+    topic_img_3_href = []
+    topic_paragraph_3_title = []
+    topic_paragraph_3_text = []
+    topic_video_1_title = []
+    topic_video_1_data_scr = []
 
     #списки с русским текстом
     topic_channel_ru = []
@@ -100,50 +108,50 @@ class Curiosity:
         in_db, new, to_post = TrendingParser.change_href()
 
         for href in new:
+            try:
+                img_1_href, channel, title, text_1, img_2_href, paragraph_2_title, paragraph_2_text, img_3_href, paragraph_3_title, paragraph_3_text, video_1_title, video_1_data_scr = topicparser.topic_parser(
+                    href)
 
-            r = requests.get(href)
+                # ЗАПОЛНЯЕМ СПИСКИ
+                # каналы
+                Curiosity.topic_channel.append(str(channel))
 
-            html = r.text
+                # заголовки
+                Curiosity.topic_title.append(str(title))
 
-            soup = BeautifulSoup(html, "lxml")
+                # ссылок на 1 изображения
+                Curiosity.topic_img_1_href.append(
+                    "http://curiosity-data.s3.amazonaws.com/images/content/hero/standard/" + img_1_href[0] + ".png")
 
-            topic_page = soup.find("div", {"class": "topic-page"})
+                # текты первых блоков
+                Curiosity.topic_text_1.append(str(text_1))
 
-            head = topic_page.find_all("div", {"class": "image-header"})
+                # ссылки на 2 изображения
+                Curiosity.topic_img_2_href.append(str(img_2_href))
 
-            body = topic_page.find_all("div", {"class": "content-item"})
+                # заголовки вторых параграфов
+                Curiosity.topic_paragraph_2_title.append(str(paragraph_2_title))
 
-            regexp_img_1 = re.compile(r'/curiosity-data\.s3\.amazonaws\.com/images/content/hero/standard/(.*?)\.png\"\)')
+                # тексты 2-х параграфов
+                Curiosity.topic_paragraph_2_text.append(str(paragraph_2_text))
 
-            for item in head:
+                # ссылки на 3 изображения
+                Curiosity.topic_img_3_href.append(str(img_3_href))
 
-                img_1 = re.findall(regexp_img_1, item.find('style').text)
+                # заголовки третьих параграфов
+                Curiosity.topic_paragraph_3_title.append(str(paragraph_3_title))
 
-                text_1 = body[0].find("p").text
+                # тексты 3-их параграфов
+                Curiosity.topic_paragraph_3_text.append(str(paragraph_3_text))
 
-                if item.find("div", {"class": "header-content"}).find('a') != None:
+                # заголовки видеороликов
+                Curiosity.topic_video_1_title.append(str(video_1_title))
 
-                    channel = item.find("div", {"class": "header-content"}).find('a').text
+                # ссылки на видеоролики
+                Curiosity.topic_video_1_data_scr.append(str(video_1_data_scr))
 
-                    title = item.find("div", {"class": "header-content"}).find('h1').text
-
-                elif item.find("div", {"class": "header-content"}).find('a') == None:
-
-                    channel = item.find("div", {"class": "header-content"}).find('h5').text
-
-                    title = item.find("div", {"class": "header-content"}).find('h1').text
-
-            #заполняем список каналов
-            Curiosity.topic_channel.append(str(channel))
-
-            #заполняем список заголовков
-            Curiosity.topic_title.append(str(title))
-
-            #заполняем список ссылок на изображения
-            Curiosity.topic_img_1_href.append("http://curiosity-data.s3.amazonaws.com/images/content/hero/standard/" + img_1[0] + ".png")
-
-            #заполняем список первых текстов
-            Curiosity.topic_text_1.append(str(text_1))
+            except:
+                print("Ошибочка выскочила")
 
 
     @staticmethod
@@ -159,7 +167,7 @@ class Curiosity:
         while count <= max_ind:
             Curiosity.topic_img_0_href.append("http://curiosity-data.s3.amazonaws.com/images/content/meme/standard/"+Curiosity.topic_img_0_hrefs[count]+".png")
             res = requests.get(Curiosity.topic_img_0_href[count])
-            with open('/home/ubuntu/workspace/curiosity-to-vk/topics/zero-img-'+str(count)+'.png', 'wb') as zero:
+            with open('C:/Users/Елена/PycharmProjects/curiosity-to-vk/topics/zero-img-'+str(count)+'.png', 'wb') as zero:
                 zero.write(res.content)
             Curiosity.topic_img_0_scr.append('/home/ubuntu/workspac/curiosity-to-v/topics/zero-img-'+str(count)+'.png')
             count = count + 1
@@ -193,6 +201,7 @@ class Curiosity:
 
         #переводим списки
         while count <= max_index:
+
             #канал
             channel = {
                 "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
@@ -296,6 +305,7 @@ class Curiosity:
 
     @staticmethod
     def test():
+        trendingparser.TrendingParser.change_href()
         Curiosity.topicsparser()
         Curiosity.translater()
         Curiosity.img_0_downloader()
@@ -306,6 +316,9 @@ class Curiosity:
         while count <= max_index:
             Curiosity.painter(count)
             count = count + 1
+
+
 Curiosity.test()
+print("STOP")
 if __name__ == "__main__":
     print("Любопытcтво делает вас умнее")

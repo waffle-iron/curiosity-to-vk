@@ -1,5 +1,6 @@
 from trendingparser import TrendingParser as TrendingParser
 import topicparser
+import os
 import redis
 
 # ТУЧА С ДАННЫМИ
@@ -61,7 +62,7 @@ for href in new:
        topic_video_1_title.append(str(video_1_title))
 
        # ссылки на видеоролики
-       topic_video_1_data_scr.append("https://www.youtube.com/watch?v=" + str(video_1_data_scr))
+       topic_video_1_data_scr.append(str(video_1_data_scr))
 
     except:
         print("Ошибочка выскочила")
