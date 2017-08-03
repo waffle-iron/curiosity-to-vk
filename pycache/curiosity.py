@@ -5,7 +5,7 @@ import requests
 import re
 import json
 from bs4 import BeautifulSoup
-import trendingparser
+import CuriosityTrendingparser
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,7 +20,7 @@ class Curiosity:
 
     @staticmethod
     def get_href():
-        href_in_db, href_new, href_to_post = trendingparser.TrendingParser.change_href()
+        href_in_db, href_new, href_to_post = CuriosityTrendingparser.TrendingParser.change_href()
 
     class Topics:
 

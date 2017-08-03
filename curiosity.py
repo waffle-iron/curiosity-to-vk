@@ -1,56 +1,55 @@
 # -*- coding: utf-8 -*-
-import logging
 import requests
 import re
-import json
-from bs4 import BeautifulSoup
-import trendingparser
-import dis
-import inspect
+import CuriosityTrendingparser
 import pyrebase
-from io import open as iopen
-import grab
+from PIL import Image, ImageFont, ImageDraw
+import CuriosityTopicparser
+from bs4 import BeautifulSoup
 from grab import Grab
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance
-from trendingparser import TrendingParser as TrendingParser
-import topicparser
+
 
 class Curiosity:
-
-    #регулярные выражения
+    # регулярные выражения
     re_zero_img = re.compile(r"https://curiosity-data\.s3\.amazonaws\.com/images/content/meme/standard/(.*?)\.png")
-
-    #списки с английским тектом
-    topic = [title, [] = []
-    topic_img_1_scr = []
+    # списки с английским тектом
+    topic_href = []
+    topic_channel = []
+    topic_title = []
     topic_img_0_href = []
     topic_img_0_hrefs = []
-    topic_img_0_scr =[]
+    topic_img_0_scr = []
+    topic_img_0_alt = []
     topic_text_1 = []
     topic_img_1_href = []
-    topic_channel = []
-    topic_img_2_href = []
+    topic_img_1_scr = []
     topic_paragraph_2_title = []
     topic_paragraph_2_text = []
-    topic_img_3_href = []
+    topic_img_2_href = []
+    topic_img_2_src = []
     topic_paragraph_3_title = []
     topic_paragraph_3_text = []
+    topic_img_3_href = []
+    topic_img_3_src = []
     topic_video_1_title = []
     topic_video_1_data_scr = []
-
-    #списки с русским текстом
+    # списки с русским текстом
     topic_channel_ru = []
-    topic_text_1_ru = []
     topic_title_ru = []
+    topic_img_0_alt_ru = []
+    topic_text_1_ru = []
+    topic_paragraph_2_title_ru = []
+    topic_paragraph_2_text_ru = []
+    topic_paragraph_3_title_ru = []
+    topic_paragraph_3_text_ru = []
 
-
-    def __init__(self, a):
-        self.a = a
-
+    def __init__(self, *args):
+        self.args = args
 
     @staticmethod
-    #работа с базой данных
+    # БРИГАДИР работ с базой данных
     def database():
+
         config = {
             "apiKey": "AIzaSyD6EzxDobegHGvkorLEle6OBt_RNedkD0g",
             "authDomain": "project-3931781304531690229.firebaseapp.com",
@@ -68,16 +67,14 @@ class Curiosity:
             "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-alb7j%40project-3931781304531690229.iam.gserviceaccount.com",
             "serviceAccount": "/home/ubuntu/workspace/curiosity-to-vk/pycache/kirsanov-dot-com-fa36c163c326.json"
-            }
+        }
+
+        # инициализация базы
 
         firebase = pyrebase.initialize_app(config)
 
         # Получить ссылку на службу авторизации
-        auth = firebase.auth()
-
-        uid = 'some-uid'
-
-        custom_token = auth.create_custom_token(uid)
+        auth = firebase.auth()  # uid = 'some-uid'; custom_token = auth.create_custom_token(uid)
 
         # Зарегистрировать пользователя в базе
         user = auth.sign_in_with_email_and_password("danilakirsanovspb@gmail.com", "Nhb1,e2yfk3$")
@@ -86,177 +83,231 @@ class Curiosity:
         db = firebase.database()
 
         data = {
-            "curiosity/topics/"+ str(href).replace('http://curiosity.com/topics/', ''): {
+            "curiosity/topics/" + str(Curiosity.topic_href).replace('http://curiosity.com/topics/', ''): {
                 'id': db.generate_key(),
-                'title': title,
-                'description': text_1,
-                'channel': channel,
-                'img': img_1[0]
+                'channel': Curiosity.topic_channel_ru,
+                'title': Curiosity.topic_title_ru,
+                'description': Curiosity.topic_text_1_ru,
+                'img': Curiosity.topic_img_1_scr[0]
             }
+
         }
 
         db.update(data)
 
-        #Передайте idToken пользователя методу push
-        #results = db.child("curiosity").child("topics").push(data, user['idToken'])
-
+        # Передайте idToken пользователя методу push
+        # results = db.child("curiosity").child("topics").push(data, user['idToken'])
 
     @staticmethod
-    #парсинг информации из топиков
+    # АНАЛИЗАТОР информации из топиков
     def topicsparser():
 
-        in_db, new, to_post = TrendingParser.change_href()
+        # СЛОВАРЬ ВОЗВРАЩАЕМЫЙ В РЕЗУЛЬТАТЕ АНАЛИЗА
 
-        for href in new:
-            try:
-                img_1_href, channel, title, text_1, img_2_href, paragraph_2_title, paragraph_2_text, img_3_href, paragraph_3_title, paragraph_3_text, video_1_title, video_1_data_scr = topicparser.topic_parser(
-                    href)
+        parse_result = {
+            "href": None,
+            "channel": None,
+            "title": None,
+            "img_0_href": None,
+            "img_0_scr": None,
+            "img_1_href": None,
+            "img_1_scr": None,
+            "text_1": None,
+            "paragraph_2_title": None,
+            "paragraph_2_text": None,
+            "img_3_href": None,
+            "img_3_scr": None,
+            "paragraph_3_title": None,
+            "paragraph_3_text": None,
+            "video_1_title": None,
+            "video_1_data_src": None
+        }
 
-                # ЗАПОЛНЯЕМ СПИСКИ
+        # реализация анализатора трендов
+        href_in_db, href_new, href_to_post = CuriosityTrendingparser.TrendingParser.change_href()
+
+        # НАЧАЛО ЦИКЛА ОБХОДА МАССИВА ССЫЛОК
+        count = 0
+        max_index = len(href_new) - 1
+        while count <= max_index:
+            img_1_href, channel, title, text_1, img_2_href, paragraph_2_title, paragraph_2_text, img_3_href, paragraph_3_title, paragraph_3_text, video_1_title, video_1_data_scr = CuriosityTopicparser.topic_parser(
+                    href_new[count])
+
+                # ЗАПОЛНЯЕМ СПИСКИ В СЛОВАРЕ
                 # каналы
-                Curiosity.topic_channel.append(str(channel))
+
+            Curiosity.topic_channel.append(str(channel))
 
                 # заголовки
-                Curiosity.topic_title.append(str(title))
+            Curiosity.topic_title.append(str(title))
 
                 # ссылок на 1 изображения
-                Curiosity.topic_img_1_href.append(
+            Curiosity.topic_img_1_href.append(
                     "http://curiosity-data.s3.amazonaws.com/images/content/hero/standard/" + img_1_href[0] + ".png")
 
                 # текты первых блоков
-                Curiosity.topic_text_1.append(str(text_1))
+            Curiosity.topic_text_1.append(str(text_1))
 
                 # ссылки на 2 изображения
-                Curiosity.topic_img_2_href.append(str(img_2_href))
+            Curiosity.topic_img_2_href.append(str(img_2_href))
 
                 # заголовки вторых параграфов
-                Curiosity.topic_paragraph_2_title.append(str(paragraph_2_title))
+            Curiosity.topic_paragraph_2_title.append(str(paragraph_2_title))
 
                 # тексты 2-х параграфов
-                Curiosity.topic_paragraph_2_text.append(str(paragraph_2_text))
+            Curiosity.topic_paragraph_2_text.append(str(paragraph_2_text))
 
                 # ссылки на 3 изображения
-                Curiosity.topic_img_3_href.append(str(img_3_href))
+            Curiosity.topic_img_3_href.append(str(img_3_href))
 
                 # заголовки третьих параграфов
-                Curiosity.topic_paragraph_3_title.append(str(paragraph_3_title))
+            Curiosity.topic_paragraph_3_title.append(str(paragraph_3_title))
 
                 # тексты 3-их параграфов
-                Curiosity.topic_paragraph_3_text.append(str(paragraph_3_text))
+            Curiosity.topic_paragraph_3_text.append(str(paragraph_3_text))
 
                 # заголовки видеороликов
-                Curiosity.topic_video_1_title.append(str(video_1_title))
+            Curiosity.topic_video_1_title.append(str(video_1_title))
 
                 # ссылки на видеоролики
-                Curiosity.topic_video_1_data_scr.append(str(video_1_data_scr))
-
-            except:
-                print("Ошибочка выскочила")
-
+            Curiosity.topic_video_1_data_scr.append(str(video_1_data_scr))
+            count = count + 1
 
     @staticmethod
-    #скачиваем изображения обложек постов
-    def img_0_downloader():
-        respon = requests.get("http://curiosity.com/trending/")
+    # АНАЛИЗАТОР заманухи на обложку поста
+    def img_0_alt_parser():
+        respon = requests.get("http://curiosity.com/trending/day/")
         html = respon.text
-        zero_img_srcs = re.findall(Curiosity.re_zero_img, html)
-        for x in zero_img_srcs[::3]:
-            Curiosity.topic_img_0_hrefs.append(x)
-        count = 0
-        max_ind = len(Curiosity.topic_img_0_hrefs) - 1
-        while count <= max_ind:
-            Curiosity.topic_img_0_href.append("http://curiosity-data.s3.amazonaws.com/images/content/meme/standard/"+Curiosity.topic_img_0_hrefs[count]+".png")
-            res = requests.get(Curiosity.topic_img_0_href[count])
-            with open('C:/Users/Елена/PycharmProjects/curiosity-to-vk/topics/zero-img-'+str(count)+'.png', 'wb') as zero:
-                zero.write(res.content)
-            Curiosity.topic_img_0_scr.append('/home/ubuntu/workspac/curiosity-to-v/topics/zero-img-'+str(count)+'.png')
-            count = count + 1
-
+        soup = BeautifulSoup(html, "lxml")
+        trending_grid = soup.find("div", {"class": "js-trending-grid"})
+        all_a = trending_grid.find_all("a")
+        alts = []
+        for item in all_a:
+            alts.append(str(item["title"]))
+        return alts
 
     @staticmethod
-    #скачиваем изображения, заполняем список адресов к картинкам в нашей фс
-    def img_1_downloader():
-
-        #Скачивает главные изображения постов
-        g_first_img = Grab(timeout=20)
-        g_first_img.setup(headers={'chrome-proxy': 's=Ci4KEwjMhrTr79_TAhXQIBkKHQH0A0USDAib-sXIBRCojrrZAxoJCgdkZWZhdWx0EkgwRgIhAIdAgOu3URu5cs-VjgT5MlOXD8ckBB3udUqTMeXYIGc0AiEAmdK5TxX33uuUGLrtjrZGzKNXOnV4NIJg6YKU50BVMsA=, c=win, b=3029, p=96'})
-        count = 0
-        max_index = len(Curiosity.topic_img_1_href) - 1
-        while count <= max_index:
-            resp = g_first_img.go(Curiosity.topic_img_1_href[count])
-            open('/home/ubuntu/workspace/curiosity-to-vk/topics/'+str(count)+'.png', 'wb').write(resp.body)
-            #заполняем список адресов к картинкам для нашей фс
-            Curiosity.topic_img_1_scr.append('/home/ubuntu/workspace/curiosity-to-vk/topics/'+str(count)+'.png')
-            count = count + 1
-
-        return Curiosity.topic_img_1_scr
-
-
-    @staticmethod
-    #перевод статьи curiosity на руский язык
+    # ПЕРЕВОДЧИК
     def translater():
-        #временные переменные для циклов
+
+        # временные переменные для циклов
         count = 0
         max_index = len(Curiosity.topic_channel) - 1
 
-        #переводим списки
+        # переводим списки
         while count <= max_index:
 
-            #канал
+            # канал
             channel = {
-                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "key": "trnsl.1.1.20170730T114755Z.994753b77b648f24.f3ed7d2f59fcb232c089a1a3328c0e0b900d4925",
                 "text": f"{Curiosity.topic_channel[count]}.",
                 'lang': 'en-ru',
                 'format': 'plain'
             }
-            #заголовок
+            # заголовок
             title = {
                 "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
                 "text": f"{Curiosity.topic_title[count]}.",
                 'lang': 'en-ru',
                 'format': 'plain'
             }
-            #параграф № 1
+            # замануха
+            alt = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_img_0_alt[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+            # параграф № 1
             text_1 = {
                 "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
                 "text": f"{Curiosity.topic_text_1[count]}.",
                 'lang': 'en-ru',
                 'format': 'plain'
             }
+            # параграф 2 заголовок
+            paragraph_2_title = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_paragraph_2_title[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+            # параграф 2 текст
+            paragraph_2_text = {
+                "key": "trnsl.1.1.20170730T114755Z.994753b77b648f24.f3ed7d2f59fcb232c089a1a3328c0e0b900d4925",
+                "text": f"{Curiosity.topic_paragraph_2_text[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+            # параграф 3 заголовок
+            paragraph_3_title = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_paragraph_3_title[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
+            # параграф 2 заголовок
+            paragraph_3_text = {
+                "key": "trnsl.1.1.20170514T220842Z.5b2c14ecd7990670.3ccb355751262f1359f3c3ff0b9b7d5447ce39a1",
+                "text": f"{Curiosity.topic_paragraph_3_text[count]}.",
+                'lang': 'en-ru',
+                'format': 'plain'
+            }
 
             # делаем запрос к яндекс переводчику и сохраняем ответ
             channel_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=channel).json()
-                #канал
+            # канал
             title_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=title).json()
-                #заголовок
+            # заголовок
             text_1_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=text_1).json()
-                #параграф 1
 
-            #заполняем списки с русским текстом
-            Curiosity.topic_title_ru.append(title_ru['text'])
-                #заголовок
-            Curiosity.topic_channel_ru.append(channel_ru['text'])
-                #канал
-            Curiosity.topic_text_1_ru.append(text_1_ru['text'])
-                #параграф 1
+            paragraph_2_title_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=paragraph_2_title).json()
 
-            #условие итерации
+            paragraph_2_text_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=paragraph_2_text).json()
+
+            paragraph_3_title_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=paragraph_3_title).json()
+
+            paragraph_3_text_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=paragraph_3_text).json()
+
+            img_0_alt_ru = requests.get('https://translate.yandex.net/api/v1.5/tr.json/translate', params=alt).json()
+
+            # заполняем списки с русским текстом
+
+            Curiosity.topic_title_ru.append(title_ru['text'][0])
+            # заголовок
+            Curiosity.topic_channel_ru.append(channel_ru['text'][0])
+            # канал
+            Curiosity.topic_text_1_ru.append(text_1_ru['text'][0])
+
+            Curiosity.topic_paragraph_2_title_ru.append(paragraph_2_title_ru['text'][0])
+
+            Curiosity.topic_paragraph_2_text_ru.append(paragraph_2_text_ru['text'][0])
+
+            Curiosity.topic_paragraph_3_title_ru.append(paragraph_3_title_ru['text'][0])
+
+            Curiosity.topic_paragraph_3_text_ru.append(paragraph_3_text_ru['text'][0])
+
+            Curiosity.topic_img_0_alt_ru.append(img_0_alt_ru["text"][0])
+
+            # условие итерации
             count = count + 1
 
-        return Curiosity.topic_channel_ru, Curiosity.topic_title_ru, Curiosity.topic_text_1_ru
-
-
     @staticmethod
-    def painter(count):
+    # КИСТЬ
+    def draw(count):
 
         # Название канала
-        channel = Curiosity.topic_channel_ru[count][0].upper()
+        channel = Curiosity.topic_channel_ru[count].upper()
 
         # Заголовок
-        title = Curiosity.topic_title_ru[count][0]
+        title = Curiosity.topic_title_ru[count]
+
+        # замануха
+
+        alt = Curiosity.topic_img_0_alt_ru[count]
 
         # изображение для модификации
-        img_composit = Image.open("./topics/zero-img-"+str(count)+".png").convert("RGBA")
+        img_composit = Image.open("./topics/zero-img-" + str(count) + ".png").convert("RGBA")
 
         # прозрачный загрузчик логотипов
         logo_painter = Image.open('./logo-playload.png').convert("RGBA")
@@ -288,8 +339,8 @@ class Curiosity:
         channel_draw.multiline_text((x, y), channel, font=channel_font, align="center")
 
         # наносим заголовок на загрузцик
-        logo_painter_draw.multiline_text((10, 945), title, font=channel_font, align="left")
-
+        logo_painter_draw.multiline_text((10, 975), title, font=channel_font, align="left")
+        logo_painter_draw.multiline_text((10, 945), alt, font=channel_font, align="left")
         # наносим канал и заголовок на загрузчик
         logo_painter.paste(channel_img, (5, 900))
 
@@ -297,28 +348,111 @@ class Curiosity:
         composition = Image.alpha_composite(img_composit, logo_painter)
 
         # процедура сохранения композиционной обложки в файл
-        composition.save("./topics/zero-img-"+str(count)+"-composite.png")  # compositeon.save("./topics/zero-img-0    -composit.png")
-
-
-#======ТЕСТЫ==========ТЕСТЫ===============ТЕСТЫ=============ТЕСТЫ==============
-
+        composition.save("./topics/zero-img-" + str(
+            count) + "-composite.png")  # compositeon.save("./topics/zero-img-0    -composit.png")
 
     @staticmethod
-    def test():
-        trendingparser.TrendingParser.change_href()
-        Curiosity.topicsparser()
-        Curiosity.translater()
-        Curiosity.img_0_downloader()
-        Curiosity.img_1_downloader()
-        print(Curiosity.topic_channel_ru, Curiosity.topic_title_ru, Curiosity.topic_text_1_ru)
+    # ХУДОЖНИК
+    def painters():
+        # ЦИКЛ ПРОХОДА ИЗОБРАЖЕНИЙ ДЛЯ ХУДОЖНИКА
         count = 0
-        max_index = 9
+        max_index = len(Curiosity.topic_title) - 1
         while count <= max_index:
-            Curiosity.painter(count)
+            Curiosity.draw(count)
             count = count + 1
+        return print(f"ХУДОЖНИК УСПЕШНО ОТРИСОВАЛ {max_index} ИЗОБРАЖЕНИЙ")
 
+    @staticmethod
+    # скачиваем изображения обложек постов
+    def img_0_downloader():
+        # TODO поставить колпиляцию restring в цикл и уменьшить паттерн до минимума, тогда. смотреть img_0.py
+        respon = requests.get("http://curiosity.com/trending/day/")
+        html = respon.text
+        zero_img_srcs = re.findall(Curiosity.re_zero_img, html)
+        for x in zero_img_srcs[::3]:
+            Curiosity.topic_img_0_hrefs.append(x)
+        count = 0
+        max_ind = len(Curiosity.topic_channel) - 1
+        while count <= max_ind:
+            Curiosity.topic_img_0_href.append(
+                "http://curiosity-data.s3.amazonaws.com/images/content/meme/standard/" + Curiosity.topic_img_0_hrefs[
+                    count] + ".png")
+            res = requests.get(Curiosity.topic_img_0_href[count])
+            with open('./topics/zero-img-' + str(count) + '.png',
+                      'wb') as zero:
+                zero.write(res.content)
+            Curiosity.topic_img_0_scr.append(
+                './topics/zero-img-' + str(count) + '.png')
+            count = count + 1
+        return Curiosity.topic_img_0_scr
 
-Curiosity.test()
-print("STOP")
+    @staticmethod
+    # скачиваем 1-е изображение поста
+    def img_1_downloader():
+        count = 0
+        max_index = len(Curiosity.topic_img_1_href) - 1
+        while count <= max_index:
+            res = requests.get(Curiosity.topic_img_1_href[count])
+            with open('./topics/1-img-' + str(count) + '.png',
+                      'wb') as zero:
+                zero.write(res.content)
+            Curiosity.topic_img_1_scr.append(
+                './topics/1-img-' + str(count) + '.png')
+            count = count + 1
+        return Curiosity.topic_img_1_scr
+
+    @staticmethod
+    # скачиваем 2-е изображение поста
+    def img_2_downloader():
+        count = 0
+        max_index = len(Curiosity.topic_img_2_href) - 1
+        while count <= max_index:
+            try:
+                res = requests.get(Curiosity.topic_img_2_href[count])
+                with open('./topics/2-img-' + str(count) + '.png',
+                      'wb') as zero:
+                    zero.write(res.content)
+                #Curiosity.topic_img_2_scr.append(                '/home/ubuntu/workspac/curiosity-to-v/topics/two-img-' + str(count) + '.png')
+            except:
+                with open('./topics/2-img-' + str(count) + '.png',
+                      'wb') as zero:
+                    zero.close()
+               #Curiosity.topic_img_2_scr.append("None")
+            count = count + 1
+        #return Curiosity.topic_img_2_scr
+
+    @staticmethod
+    # скачиваем 3-е изображение поста
+    def img_3_downloader():
+        count = 0
+        max_index = len(Curiosity.topic_img_3_href) - 1
+        while count <= max_index:
+            try:
+                res = requests.get(Curiosity.topic_img_3_href[count])
+                with open('./topics/3-img-' + str(count) + '.png',
+                      'wb') as zero:
+                    zero.write(res.content)
+                #Curiosity.topic_img_3_scr.append(                '/home/ubuntu/workspac/curiosity-to-v/topics/two-img-' + str(count) + '.png')
+            except:
+                with open('./3-img-' + str(count) + '.png',
+                      'wb') as zero:
+                    zero.close()
+               #Curiosity.topic_img_3_scr.append("None")
+            count = count + 1
+        #return Curiosity.topic_img_3_scr
+
+# ======ТЕСТЫ==========ТЕСТЫ===============ТЕСТЫ=============ТЕСТЫ==============
+CuriosityTrendingparser.TrendingParser.change_href()
+Curiosity.topic_img_0_alt = Curiosity.img_0_alt_parser()
+Curiosity.topicsparser()
+Curiosity.img_0_downloader()
+Curiosity.translater()
+Curiosity.painters()
+Curiosity.img_1_downloader()
+Curiosity.img_3_downloader()
+Curiosity.img_2_downloader()
+x = "ПАУЗА В ЧЕСТЬ УСПЕШНОГО ЗАВЕРШЕНИЯ"
+print(x)
+y = x
 if __name__ == "__main__":
     print("Любопытcтво делает вас умнее")

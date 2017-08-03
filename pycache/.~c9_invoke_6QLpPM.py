@@ -1,7 +1,7 @@
 import requests
 import re
 from grab import Grab
-import trendingparser
+import CuriosityTrendingparser
 
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 #from topicsparser import Curiosity
